@@ -26,6 +26,8 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import de.Keyle.MyWolf.ConfigBuffer;
+import de.Keyle.MyWolf.Wolves;
+import de.Keyle.MyWolf.Wolves.WolfState;
 import de.Keyle.MyWolf.util.MyWolfLanguage;
 import de.Keyle.MyWolf.util.MyWolfPermissions;
 import de.Keyle.MyWolf.util.MyWolfUtil;
@@ -39,17 +41,19 @@ public class MyWolfStop implements CommandExecutor
 			Player player = (Player) sender;
 			if (ConfigBuffer.mWolves.containsKey(player.getName()))
 			{
+				Wolves Wolf = ConfigBuffer.mWolves.get(player.getName());
+
 				if (MyWolfPermissions.has(player, "mywolf.stop") == false)
 				{
 					return true;
 				}
-				if (ConfigBuffer.mWolves.get(player.getName()).isDead == true || ConfigBuffer.mWolves.get(player.getName()).isThere == false)
+				if (Wolf.Status == WolfState.Despawned)
 				{
 					sender.sendMessage(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_CallFirst")));
 					return true;
 				}
 				sender.sendMessage(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_StopAttack")).replace("%wolfname%", ConfigBuffer.mWolves.get(player.getName()).Name));
-				ConfigBuffer.mWolves.get(player.getName()).Wolf.setTarget((LivingEntity) null);
+				Wolf.Wolf.setTarget((LivingEntity) null);
 				return true;
 			}
 			else

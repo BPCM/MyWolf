@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Server;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
@@ -43,12 +44,16 @@ import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.flags.DefaultFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 
-import de.Keyle.MyWolf.MyWolf;
-
 public class MyWolfUtil
 {
 
 	public static Logger Log = Logger.getLogger("Minecraft");
+	private static Server server = org.bukkit.Bukkit.getServer();
+
+	public static Server getServer()
+	{
+		return server;
+	}
 
 	public static String SetColors(String text)
 	{
@@ -92,11 +97,20 @@ public class MyWolfUtil
 		}
 	}
 
-	public static boolean isNPC(Player p)
+	public static boolean isNPC(Player player)
 	{
-		if (MyWolf.Plugin.getServer().getPluginManager().getPlugin("Citizens") != null)
+		Plugin plugin = server.getPluginManager().getPlugin("Citizens");
+		if (plugin != null)
 		{
-			return com.citizens.NPCs.NPCManager.isNPC(p);
+			int version = Integer.parseInt(plugin.getDescription().getVersion().replace(".", ""), 109);
+			if (version <= 108)
+			{
+				return com.fullwall.Citizens.NPCs.NPCManager.isNPC(player);
+			}
+			else
+			{
+				return com.citizens.NPCs.NPCManager.isNPC(player);
+			}
 		}
 		return false;
 	}
@@ -144,7 +158,8 @@ public class MyWolfUtil
 
 	public static boolean getPVP(Location loc)
 	{
-		Plugin WG = MyWolf.Plugin.getServer().getPluginManager().getPlugin("WorldGuard");
+
+		Plugin WG = server.getPluginManager().getPlugin("WorldGuard");
 		if (WG != null)
 		{
 			if (WG.isEnabled())
@@ -159,7 +174,7 @@ public class MyWolfUtil
 				return pvp;
 			}
 		}
-		return MyWolf.Plugin.getServer().getWorld(loc.getWorld().getName()).getPVP();
+		return server.getWorld(loc.getWorld().getName()).getPVP();
 	}
 
 	public static boolean hasSkill(Map<String, Boolean> skills, String skill)
@@ -177,5 +192,10 @@ public class MyWolfUtil
 		{
 			player.sendMessage(Message);
 		}
+	}
+
+	public static double getDistance(Location loc1, Location loc2)
+	{
+		return Math.sqrt(Math.pow(loc1.getX() - loc2.getX(), 2.0D) + Math.pow(loc1.getZ() - loc2.getZ(), 2.0D));
 	}
 }

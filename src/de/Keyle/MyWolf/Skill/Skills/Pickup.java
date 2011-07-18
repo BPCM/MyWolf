@@ -19,11 +19,11 @@
 
 package de.Keyle.MyWolf.Skill.Skills;
 
-import de.Keyle.MyWolf.ConfigBuffer;
 import de.Keyle.MyWolf.Wolves;
 import de.Keyle.MyWolf.Skill.MyWolfSkill;
 import de.Keyle.MyWolf.util.MyWolfConfig;
 import de.Keyle.MyWolf.util.MyWolfLanguage;
+import de.Keyle.MyWolf.util.MyWolfPermissions;
 import de.Keyle.MyWolf.util.MyWolfUtil;
 
 public class Pickup extends MyWolfSkill
@@ -31,22 +31,25 @@ public class Pickup extends MyWolfSkill
 	public Pickup()
 	{
 		this.Name = "Pickup";
-		ConfigBuffer.RegisteredSkills.put(Name, this);
 	}
 
 	@Override
 	public void run(Wolves wolf, Object args)
 	{
+		if (MyWolfPermissions.has(wolf.getOwner(), "MyWolf.Skills." + this.Name) == false)
+		{
+			return;
+		}
 		if (de.Keyle.MyWolf.util.MyWolfUtil.hasSkill(wolf.Abilities, "Pickup"))
 		{
 			boolean Enabled;
-			if(args != null)
+			if (args != null)
 			{
 				Enabled = (Boolean) args;
 			}
 			else
 			{
-				if(wolf.DropTimer == -1)
+				if (wolf.DropTimer == -1)
 				{
 					Enabled = true;
 				}
@@ -58,12 +61,12 @@ public class Pickup extends MyWolfSkill
 			if (Enabled == true)
 			{
 				wolf.DropTimer();
-				MyWolfUtil.sendMessage(wolf.getPlayer(), "Pickup activated!");
+				wolf.sendMessageToOwner("Pickup activated!");
 			}
 			else
 			{
 				wolf.StopDropTimer();
-				MyWolfUtil.sendMessage(wolf.getPlayer(), "Pickup stopped!");
+				wolf.sendMessageToOwner("Pickup stopped!");
 			}
 		}
 	}
@@ -71,10 +74,14 @@ public class Pickup extends MyWolfSkill
 	@Override
 	public void activate(Wolves wolf, Object args)
 	{
+		if (MyWolfPermissions.has(wolf.getOwner(), "MyWolf.Skills." + this.Name) == false)
+		{
+			return;
+		}
 		if (de.Keyle.MyWolf.util.MyWolfUtil.hasSkill(wolf.Abilities, "Pickup") == false)
 		{
 			wolf.Abilities.put("Pickup", true);
-			MyWolfUtil.sendMessage(wolf.getPlayer(), MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_AddPickup")).replace("%wolfname%", wolf.Name).replace("%range%", "" + MyWolfConfig.WolfPickupRange));
+			wolf.sendMessageToOwner(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_AddPickup")).replace("%wolfname%", wolf.Name).replace("%range%", "" + MyWolfConfig.WolfPickupRange));
 		}
 	}
 }

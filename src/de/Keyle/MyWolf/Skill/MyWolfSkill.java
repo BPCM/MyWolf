@@ -19,7 +19,10 @@
 
 package de.Keyle.MyWolf.Skill;
 
+import de.Keyle.MyWolf.ConfigBuffer;
 import de.Keyle.MyWolf.Wolves;
+import de.Keyle.MyWolf.util.MyWolfPermissions;
+import de.Keyle.MyWolf.util.MyWolfUtil;
 
 public class MyWolfSkill
 {
@@ -30,12 +33,40 @@ public class MyWolfSkill
 		return this.Name;
 	}
 
+	public final void registerSkill()
+	{
+		try
+		{
+			ConfigBuffer.registerSkill(this.Name, this);
+		}
+		catch (Exception e)
+		{
+			MyWolfUtil.Log.info("[MyWolf] " + e.getMessage());
+		}
+	}
+
+	public final void registerSkill(String Name)
+	{
+		try
+		{
+			ConfigBuffer.registerSkill(Name, this);
+		}
+		catch (Exception e)
+		{
+			MyWolfUtil.Log.info("[MyWolf] " + e.getMessage());
+		}
+	}
+
 	public void run(Wolves wolf, Object args)
 	{
 	}
 
 	public void activate(Wolves wolf, Object args)
 	{
+		if (MyWolfPermissions.has(wolf.getOwner(), "MyWolf.Skills." + this.Name) == false)
+		{
+			return;
+		}
 		wolf.Abilities.put(this.Name, true);
 	}
 }

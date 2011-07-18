@@ -25,6 +25,7 @@ import de.Keyle.MyWolf.ConfigBuffer;
 import de.Keyle.MyWolf.Wolves;
 import de.Keyle.MyWolf.Skill.MyWolfSkill;
 import de.Keyle.MyWolf.util.MyWolfLanguage;
+import de.Keyle.MyWolf.util.MyWolfPermissions;
 import de.Keyle.MyWolf.util.MyWolfUtil;
 
 public class Inventory extends MyWolfSkill
@@ -32,14 +33,22 @@ public class Inventory extends MyWolfSkill
 	public Inventory()
 	{
 		this.Name = "Inventory";
-		ConfigBuffer.RegisteredSkills.put("Inventory", this);
-		ConfigBuffer.RegisteredSkills.put("InventorySmall", this);
-		ConfigBuffer.RegisteredSkills.put("InventoryLarge", this);
+		registerSkill();
+		registerSkill("InventorySmall");
+		registerSkill("InventoryLarge");
 	}
 
 	@Override
 	public void run(Wolves wolf, Object args)
 	{
+		if (MyWolfUtil.hasSkill(wolf.Abilities, "InventoryLarge") && MyWolfPermissions.has(wolf.getOwner(), "MyWolf.Skills.InventoryLarge") == false)
+		{
+			return;
+		}
+		else if (MyWolfUtil.hasSkill(wolf.Abilities, "InventorySmall") && MyWolfPermissions.has(wolf.getOwner(), "MyWolf.Skills.InventorySmall") == false)
+		{
+
+		}
 		if (MyWolfUtil.hasSkill(wolf.Abilities, "InventorySmall") || MyWolfUtil.hasSkill(wolf.Abilities, "InventoryLarge"))
 		{
 			if (wolf.getLocation().getBlock().getType() != Material.STATIONARY_WATER && wolf.getLocation().getBlock().getType() != Material.WATER)
@@ -47,13 +56,13 @@ public class Inventory extends MyWolfSkill
 				wolf.OpenInventory();
 				if (wolf.isSitting() == false)
 				{
-					ConfigBuffer.WolfChestOpened.add(wolf.getPlayer());
+					ConfigBuffer.WolfChestOpened.add(wolf.getOwner());
 				}
 				wolf.Wolf.setSitting(true);
 			}
 			else
 			{
-				wolf.getPlayer().sendMessage(MyWolfLanguage.getString("Msg_InventorySwimming"));
+				wolf.sendMessageToOwner(MyWolfLanguage.getString("Msg_InventorySwimming"));
 			}
 		}
 	}
@@ -63,12 +72,20 @@ public class Inventory extends MyWolfSkill
 	{
 		if (MyWolfUtil.hasSkill(wolf.Abilities, "InventorySmall") == false)
 		{
+			if (MyWolfPermissions.has(wolf.getOwner(), "MyWolf.Skills.InventorySmall") == false)
+			{
+				return;
+			}
 			wolf.Abilities.put("InventorySmall", true);
 		}
 		else
 		{
+			if (MyWolfPermissions.has(wolf.getOwner(), "MyWolf.Skills.InventoryLarge") == false)
+			{
+				return;
+			}
 			wolf.Abilities.put("InventoryLarge", true);
 		}
-		MyWolfUtil.sendMessage(wolf.getPlayer(), MyWolfUtil.SetColors(MyWolfUtil.hasSkill(wolf.Abilities, "InventoryLarge") == false ? MyWolfLanguage.getString("Msg_AddChest") : MyWolfLanguage.getString("Msg_AddChestGreater")).replace("%wolfname%", wolf.Name));
+		wolf.sendMessageToOwner(MyWolfUtil.SetColors(MyWolfUtil.hasSkill(wolf.Abilities, "InventoryLarge") == false ? MyWolfLanguage.getString("Msg_AddChest") : MyWolfLanguage.getString("Msg_AddChestGreater")).replace("%wolfname%", wolf.Name));
 	}
 }

@@ -26,6 +26,7 @@ import org.bukkit.event.vehicle.VehicleEnterEvent;
 import org.bukkit.event.vehicle.VehicleListener;
 
 import de.Keyle.MyWolf.ConfigBuffer;
+import de.Keyle.MyWolf.Wolves.WolfState;
 
 public class MyWolfVehicleListener extends VehicleListener
 {
@@ -52,7 +53,7 @@ public class MyWolfVehicleListener extends VehicleListener
 			Player player = (Player) event.getEntered();
 			if (ConfigBuffer.mWolves.containsKey(player.getName()))
 			{
-				if (ConfigBuffer.mWolves.get(player.getName()).isThere == true && ConfigBuffer.mWolves.get(player.getName()).isDead == false && ConfigBuffer.mWolves.get(player.getName()).isSitting() == false)
+				if (ConfigBuffer.mWolves.get(player.getName()).Status == WolfState.Here && ConfigBuffer.mWolves.get(player.getName()).isSitting() == false)
 				{
 					ConfigBuffer.mWolves.get(player.getName()).Wolf.setSitting(true);
 				}

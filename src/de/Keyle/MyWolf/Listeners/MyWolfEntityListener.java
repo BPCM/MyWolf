@@ -43,6 +43,8 @@ import org.bukkit.event.entity.EntityTargetEvent;
 import de.Keyle.MyWolf.ConfigBuffer;
 import de.Keyle.MyWolf.MyWolf;
 import de.Keyle.MyWolf.Wolves;
+import de.Keyle.MyWolf.Wolves.BehaviorState;
+import de.Keyle.MyWolf.Wolves.WolfState;
 import de.Keyle.MyWolf.util.MyWolfConfig;
 import de.Keyle.MyWolf.util.MyWolfPermissions;
 import de.Keyle.MyWolf.util.MyWolfUtil;
@@ -101,6 +103,7 @@ public class MyWolfEntityListener extends EntityListener
 					if (WolfOwner != null && WolfOwner.equals(player.getName()))
 					{
 						Wolves wolf = ConfigBuffer.mWolves.get(WolfOwner);
+						wolf.SetName();
 						if (player.getItemInHand().getType() == MyWolfConfig.WolfLeashItem)
 						{
 							String msg;
@@ -116,17 +119,15 @@ public class MyWolfEntityListener extends EntityListener
 							{
 								msg = "" + ChatColor.RED + wolf.getHealth() + ChatColor.WHITE + "/" + ChatColor.YELLOW + wolf.HealthMax + ChatColor.WHITE;
 							}
-							//player.sendMessage(msg);
 							player.sendMessage(MyWolfUtil.SetColors("%wolfname% HP: %hp%").replace("%wolfname%", wolf.Name).replace("%hp%", msg));
+							player.sendMessage(MyWolfUtil.SetColors("%wolfname%(Lv%lvl%) (%proz%%) EXP: %exp%/%reqexp%").replace("%wolfname%", wolf.Name).replace("%exp%", String.format("{0:F2}", wolf.Experience.getExp())).replace("%lvl%", "" + wolf.Experience.getLevel()).replace("%reqexp%", String.format("{0:F2}", wolf.Experience.getrequireEXP())).replace("%proz%", String.format("{0:F2}", wolf.Experience.getExp() * 100 / wolf.Experience.getrequireEXP())));
 							if (wolf.Wolf.isSitting())
 							{
 								event.setCancelled(true);
-								wolf.isSitting = true;
 								wolf.Wolf.setSitting(true);
 							}
 							else
 							{
-								wolf.isSitting = false;
 								event.setCancelled(true);
 							}
 						}
@@ -196,13 +197,13 @@ public class MyWolfEntityListener extends EntityListener
 									wolf.Wolf.getWorld().dropItem(wolf.getLocation(), new org.bukkit.inventory.ItemStack(is.id, is.count, (short) is.damage));
 								}
 							}
-							wolf.getPlayer().sendMessage(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_WolfIsGone")).replace("%wolfname%", wolf.Name));
-							ConfigBuffer.mWolves.remove(wolf.getPlayer().getName());
+							wolf.getOwner().sendMessage(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_WolfIsGone")).replace("%wolfname%", wolf.Name));
+							ConfigBuffer.mWolves.remove(wolf.getOwner().getName());
 							MyWolf.Plugin.SaveWolves(ConfigBuffer.WolvesConfig);
 							return;
 						}
 					}
-					wolf.isDead = true;
+					wolf.Status = WolfState.Dead;
 					wolf.RespawnTimer();
 					SendDeathMessage(event);
 					break;
@@ -246,7 +247,7 @@ public class MyWolfEntityListener extends EntityListener
 				EntityDamageByProjectileEvent e = (EntityDamageByProjectileEvent) event.getEntity().getLastDamageCause();
 				if (event.getEntity().getLastDamageCause() instanceof Player)
 				{
-					if (((Player) e.getDamager()) == wolf.getPlayer())
+					if (((Player) e.getDamager()) == wolf.getOwner())
 					{
 						Killer = MyWolfUtil.SetColors(MyWolfLanguage.getString("You"));
 					}
@@ -269,7 +270,7 @@ public class MyWolfEntityListener extends EntityListener
 				EntityDamageByEntityEvent e = (EntityDamageByEntityEvent) event.getEntity().getLastDamageCause();
 				if (e.getDamager() instanceof Player)
 				{
-					if (((Player) e.getDamager()) == wolf.getPlayer())
+					if (((Player) e.getDamager()) == wolf.getOwner())
 					{
 						Killer = MyWolfUtil.SetColors(MyWolfLanguage.getString("You"));
 					}
@@ -304,15 +305,15 @@ public class MyWolfEntityListener extends EntityListener
 					if (w.isTamed() == true)
 					{
 						Killer = MyWolfUtil.SetColors(MyWolfLanguage.getString("Wolf")).replace("%player%", ((CraftWolf) w).getHandle().getOwnerName());;
-						//Killer = "a Wolf of " + ((Player)w.getOwner()).getName();
-						//for ( String owner : cb.mWolves.keySet() )
-						//{
-						//f(cb.mWolves.get(owner).MyWolf == w)
-						//{
-						//Killer = "the wolf \"" +ChatColor.AQUA+ cb.mWolves.get(owner).Name + ChatColor.WHITE+ "\" of " + ((Player)w.getOwner()).getName();
+						Killer = "a Wolf of " + ((Player) w.getOwner()).getName();
+						for (String owner : ConfigBuffer.mWolves.keySet())
+						{
+							if (ConfigBuffer.mWolves.get(owner).getID() == w.getEntityId())
+							{
+								//Killer = "the wolf \"" +ChatColor.AQUA+ cb.mWolves.get(owner).Name + ChatColor.WHITE+ "\" of " + ((Player)w.getOwner()).getName();
 
-						//}
-						//}
+							}
+						}
 					}
 					else
 					{
@@ -348,7 +349,7 @@ public class MyWolfEntityListener extends EntityListener
 			{
 				Killer = MyWolfUtil.SetColors(MyWolfLanguage.getString("kvoid"));
 			}
-			wolf.getPlayer().sendMessage(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_DeathMessage")).replace("%wolfname%", wolf.Name) + Killer);
+			wolf.getOwner().sendMessage(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_DeathMessage")).replace("%wolfname%", wolf.Name) + Killer);
 		}
 	}
 
@@ -363,9 +364,16 @@ public class MyWolfEntityListener extends EntityListener
 				{
 					if (Wolf.getID() == event.getEntity().getEntityId())
 					{
-						if (Wolf.Behavior == de.Keyle.MyWolf.Wolves.BehaviorState.FRIENDLY)
+						if (Wolf.Behavior == de.Keyle.MyWolf.Wolves.BehaviorState.Friendly)
 						{
 							event.setCancelled(true);
+						}
+						else if (Wolf.Behavior == BehaviorState.Raid)
+						{
+							if (event.getTarget() instanceof Player || (event.getTarget() instanceof Wolf && ((Wolf) event.getTarget()).isTamed() == true))
+							{
+								continue;
+							}
 						}
 					}
 				}

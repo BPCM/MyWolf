@@ -19,11 +19,11 @@
 
 package de.Keyle.MyWolf.Skill.Skills;
 
-import de.Keyle.MyWolf.ConfigBuffer;
 import de.Keyle.MyWolf.Wolves;
 import de.Keyle.MyWolf.Skill.MyWolfSkill;
 import de.Keyle.MyWolf.util.MyWolfConfig;
 import de.Keyle.MyWolf.util.MyWolfLanguage;
+import de.Keyle.MyWolf.util.MyWolfPermissions;
 import de.Keyle.MyWolf.util.MyWolfUtil;
 
 public class Live extends MyWolfSkill
@@ -31,22 +31,26 @@ public class Live extends MyWolfSkill
 	public Live()
 	{
 		this.Name = "Live";
-		ConfigBuffer.RegisteredSkills.put(Name, this);
+		registerSkill();
 	}
 
 	@Override
 	public void activate(Wolves wolf, Object args)
 	{
+		if (MyWolfPermissions.has(wolf.getOwner(), "MyWolf.Skills." + this.Name) == false)
+		{
+			return;
+		}
 		if (MyWolfConfig.WolfMaxLives > 0)
 		{
 			if (wolf.Lives < MyWolfConfig.WolfMaxLives)
 			{
 				wolf.Lives += 1;
-				MyWolfUtil.sendMessage(wolf.getPlayer(), MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_AddLive")).replace("%wolfname%", wolf.Name));
+				wolf.sendMessageToOwner(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_AddLive")).replace("%wolfname%", wolf.Name));
 			}
 			else
 			{
-				MyWolfUtil.sendMessage(wolf.getPlayer(), MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_MaxLives")).replace("%wolfname%", wolf.Name).replace("%maxlives%", "" + MyWolfConfig.WolfMaxLives));
+				wolf.sendMessageToOwner(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_MaxLives")).replace("%wolfname%", wolf.Name).replace("%maxlives%", "" + MyWolfConfig.WolfMaxLives));
 			}
 		}
 	}

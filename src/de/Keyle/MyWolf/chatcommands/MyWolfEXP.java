@@ -24,11 +24,11 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import de.Keyle.MyWolf.ConfigBuffer;
+import de.Keyle.MyWolf.Wolves;
 import de.Keyle.MyWolf.util.MyWolfLanguage;
-import de.Keyle.MyWolf.util.MyWolfPermissions;
 import de.Keyle.MyWolf.util.MyWolfUtil;
 
-public class MyWolfName implements CommandExecutor
+public class MyWolfEXP implements CommandExecutor
 {
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
 	{
@@ -37,30 +37,14 @@ public class MyWolfName implements CommandExecutor
 			Player player = (Player) sender;
 			if (ConfigBuffer.mWolves.containsKey(player.getName()))
 			{
-				if (MyWolfPermissions.has(player, "mywolf.setname") == false)
-				{
-					return true;
-				}
-				if (args.length < 1)
-				{
-					return false;
-				}
-				String name = "";
-				for (String arg : args)
-				{
-					name += arg + " ";
-				}
-				name = name.substring(0, name.length() - 1);
-				ConfigBuffer.mWolves.get(player.getName()).SetName(name);
-				sender.sendMessage(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_NewName")).replace("%wolfname%", name));
+				Wolves wolf = ConfigBuffer.mWolves.get(player.getName());
+				wolf.sendMessageToOwner(MyWolfUtil.SetColors("%wolfname%(Lv%lvl%) (%proz%%) EXP: %exp%/%reqexp%").replace("%wolfname%", wolf.Name).replace("%exp%", String.format("{0:F2}", wolf.Experience.getExp())).replace("%lvl%", "" + wolf.Experience.getLevel()).replace("%reqexp%", String.format("{0:F2}", wolf.Experience.getrequireEXP())).replace("%proz%", String.format("{0:F2}", wolf.Experience.getExp() * 100 / wolf.Experience.getrequireEXP())));
 				return true;
 			}
 			else
 			{
 				sender.sendMessage(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_DontHaveWolf")));
-				return true;
 			}
-
 		}
 		return true;
 	}

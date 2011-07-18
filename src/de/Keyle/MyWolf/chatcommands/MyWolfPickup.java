@@ -25,6 +25,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import de.Keyle.MyWolf.ConfigBuffer;
+import de.Keyle.MyWolf.Wolves;
+import de.Keyle.MyWolf.Wolves.WolfState;
 import de.Keyle.MyWolf.util.MyWolfLanguage;
 import de.Keyle.MyWolf.util.MyWolfUtil;
 
@@ -37,14 +39,16 @@ public class MyWolfPickup implements CommandExecutor
 			Player player = (Player) sender;
 			if (ConfigBuffer.mWolves.containsKey(player.getName()))
 			{
-				if (ConfigBuffer.mWolves.get(player.getName()).isDead == true || ConfigBuffer.mWolves.get(player.getName()).isThere == false)
+				Wolves Wolf = ConfigBuffer.mWolves.get(player.getName());
+
+				if (Wolf.Status == WolfState.Despawned)
 				{
 					sender.sendMessage(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_CallFirst")));
 					return true;
 				}
-				if (MyWolfUtil.hasSkill(ConfigBuffer.mWolves.get(player.getName()).Abilities, "Pickup"))
+				if (MyWolfUtil.hasSkill(Wolf.Abilities, "Pickup"))
 				{
-					ConfigBuffer.RegisteredSkills.get("Pickup").run(ConfigBuffer.mWolves.get(player.getName()), null);
+					ConfigBuffer.RegisteredSkills.get("Pickup").run(Wolf, null);
 				}
 				else
 				{

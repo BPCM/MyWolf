@@ -19,10 +19,10 @@
 
 package de.Keyle.MyWolf.Skill.Skills;
 
-import de.Keyle.MyWolf.ConfigBuffer;
 import de.Keyle.MyWolf.Wolves;
 import de.Keyle.MyWolf.Skill.MyWolfSkill;
 import de.Keyle.MyWolf.util.MyWolfLanguage;
+import de.Keyle.MyWolf.util.MyWolfPermissions;
 import de.Keyle.MyWolf.util.MyWolfUtil;
 
 public class HP extends MyWolfSkill
@@ -30,14 +30,21 @@ public class HP extends MyWolfSkill
 	public HP()
 	{
 		this.Name = "HP";
-		ConfigBuffer.RegisteredSkills.put(Name, this);
+		registerSkill();
 	}
 
 	@Override
 	public void activate(Wolves wolf, Object args)
 	{
-		wolf.HealthMax += 1;
-		wolf.setWolfHealth(wolf.HealthMax);
-		MyWolfUtil.sendMessage(wolf.getPlayer(), MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_AddHP").replace("%wolfname%", wolf.Name)));
+		if (MyWolfPermissions.has(wolf.getOwner(), "MyWolf.Skills." + this.Name) == false)
+		{
+			return;
+		}
+		if (wolf.HealthMax < 20)
+		{
+			wolf.HealthMax += 1;
+			wolf.setWolfHealth(wolf.HealthMax);
+			wolf.sendMessageToOwner(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_AddHP").replace("%wolfname%", wolf.Name)));
+		}
 	}
 }

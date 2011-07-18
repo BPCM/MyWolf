@@ -32,13 +32,13 @@ public class MyWolfWorldListener extends WorldListener
 	@Override
 	public void onChunkUnload(ChunkUnloadEvent event)
 	{
-		for(Entity e : event.getChunk().getEntities())
+		for (Entity e : event.getChunk().getEntities())
 		{
 			if (e instanceof Wolf)
 			{
-				for(Wolves w : ConfigBuffer.mWolves.values())
+				for (Wolves w : ConfigBuffer.mWolves.values())
 				{
-					if(w.getID() == e.getEntityId())
+					if (w.getID() == e.getEntityId())
 					{
 						w.removeWolf();
 						break;

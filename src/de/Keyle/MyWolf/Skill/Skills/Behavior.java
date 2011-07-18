@@ -19,9 +19,9 @@
 
 package de.Keyle.MyWolf.Skill.Skills;
 
-import de.Keyle.MyWolf.ConfigBuffer;
 import de.Keyle.MyWolf.Wolves;
 import de.Keyle.MyWolf.Wolves.BehaviorState;
+import de.Keyle.MyWolf.util.MyWolfPermissions;
 import de.Keyle.MyWolf.Skill.MyWolfSkill;
 
 public class Behavior extends MyWolfSkill
@@ -29,26 +29,37 @@ public class Behavior extends MyWolfSkill
 	public Behavior()
 	{
 		this.Name = "Behavior";
-		ConfigBuffer.RegisteredSkills.put(this.Name, this);
+		registerSkill();
 	}
 
 	@Override
-	public void run(Wolves Wolf, Object args)
+	public void run(Wolves wolf, Object args)
 	{
-		if (de.Keyle.MyWolf.util.MyWolfUtil.hasSkill(Wolf.Abilities, "Behavior"))
+		if (MyWolfPermissions.has(wolf.getOwner(), "MyWolf.Skills." + this.Name) == false)
 		{
-			if (Wolf.Behavior == BehaviorState.PASSIV)
+			return;
+		}
+		if (de.Keyle.MyWolf.util.MyWolfUtil.hasSkill(wolf.Abilities, "Behavior"))
+		{
+			if (args instanceof BehaviorState)
 			{
-				Wolf.Behavior = BehaviorState.FRIENDLY;
+				wolf.Behavior = (BehaviorState) args;
 			}
-			else if (Wolf.Behavior == BehaviorState.FRIENDLY)
+			else
 			{
-				Wolf.Behavior = BehaviorState.AGRESSIV;
-				Wolf.AgressiveTimer();
-			}
-			else if (Wolf.Behavior == BehaviorState.AGRESSIV)
-			{
-				Wolf.Behavior = BehaviorState.PASSIV;
+				if (wolf.Behavior == BehaviorState.Normal)
+				{
+					wolf.Behavior = BehaviorState.Friendly;
+				}
+				else if (wolf.Behavior == BehaviorState.Friendly)
+				{
+					wolf.Behavior = BehaviorState.Agressive;
+					wolf.AgressiveTimer();
+				}
+				else if (wolf.Behavior == BehaviorState.Agressive)
+				{
+					wolf.Behavior = BehaviorState.Normal;
+				}
 			}
 		}
 	}

@@ -28,6 +28,8 @@ import org.bukkit.entity.Player;
 
 import de.Keyle.MyWolf.ConfigBuffer;
 import de.Keyle.MyWolf.MyWolf;
+import de.Keyle.MyWolf.Wolves;
+import de.Keyle.MyWolf.Wolves.WolfState;
 import de.Keyle.MyWolf.util.MyWolfLanguage;
 import de.Keyle.MyWolf.util.MyWolfPermissions;
 import de.Keyle.MyWolf.util.MyWolfUtil;
@@ -41,11 +43,13 @@ public class MyWolfRelease implements CommandExecutor
 			Player player = (Player) sender;
 			if (ConfigBuffer.mWolves.containsKey(player.getName()))
 			{
+				Wolves Wolf = ConfigBuffer.mWolves.get(player.getName());
+
 				if (MyWolfPermissions.has(player, "mywolf.release") == false)
 				{
 					return true;
 				}
-				if (ConfigBuffer.mWolves.get(player.getName()).isDead == true || ConfigBuffer.mWolves.get(player.getName()).isThere == false)
+				if (Wolf.Status == WolfState.Despawned)
 				{
 					sender.sendMessage(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_CallFirst")));
 					return true;
@@ -60,15 +64,15 @@ public class MyWolfRelease implements CommandExecutor
 					name += arg + " ";
 				}
 				name = name.substring(0, name.length() - 1);
-				if (ConfigBuffer.mWolves.get(player.getName()).Name.equalsIgnoreCase(name))
+				if (Wolf.Name.equalsIgnoreCase(name))
 				{
-					ConfigBuffer.mWolves.get(player.getName()).Wolf.setOwner(null);
-					ConfigBuffer.mWolves.get(player.getName()).StopDropTimer();
-					for (ItemStack is : ConfigBuffer.mWolves.get(player.getName()).LargeInventory.getContents())
+					Wolf.Wolf.setOwner(null);
+					Wolf.StopDropTimer();
+					for (ItemStack is : Wolf.LargeInventory.getContents())
 					{
 						if (is != null)
 						{
-							ConfigBuffer.mWolves.get(player.getName()).Wolf.getWorld().dropItem(ConfigBuffer.mWolves.get(player.getName()).getLocation(), new org.bukkit.inventory.ItemStack(is.id, is.count, (short) is.damage));
+							Wolf.Wolf.getWorld().dropItem(Wolf.getLocation(), new org.bukkit.inventory.ItemStack(is.id, is.count, (short) is.damage));
 						}
 					}
 					sender.sendMessage(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_Release")).replace("%wolfname%", ConfigBuffer.mWolves.get(player.getName()).Name));

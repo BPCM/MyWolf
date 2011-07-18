@@ -51,7 +51,7 @@ public class LevelUpEvent extends Event implements Cancellable
 
 	public Player getOwner()
 	{
-		return wolf.getPlayer();
+		return wolf.getOwner();
 	}
 
 	public Wolves getWolf()

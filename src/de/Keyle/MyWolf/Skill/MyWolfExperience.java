@@ -30,18 +30,14 @@ import de.Keyle.MyWolf.event.LevelUpEvent;
 
 public class MyWolfExperience
 {
-	double Faktor;
+	private double Faktor;
 	Wolves Wolf;
 
-	double Exp = 0;
+	private double Exp = 0;
 
-	public Map<CreatureType, Double> MobEXP = new HashMap<CreatureType, Double>();
-
-	public MyWolfExperience(double Faktor, Wolves Wolf)
+	public final static Map<CreatureType, Double> MobEXP = new HashMap<CreatureType, Double>();
+	static
 	{
-		this.Wolf = Wolf;
-		this.Faktor = Faktor;
-
 		MobEXP.put(CreatureType.SKELETON, 1.1);
 		MobEXP.put(CreatureType.ZOMBIE, 1.1);
 		MobEXP.put(CreatureType.SPIDER, 1.05);
@@ -50,6 +46,12 @@ public class MyWolfExperience
 		MobEXP.put(CreatureType.GHAST, 0.85);
 		MobEXP.put(CreatureType.PIG_ZOMBIE, 1.1);
 		MobEXP.put(CreatureType.GIANT, 10.75);
+	}
+
+	public MyWolfExperience(double Faktor, Wolves Wolf)
+	{
+		this.Wolf = Wolf;
+		this.Faktor = Faktor;
 	}
 
 	public void setExp(double Exp)
@@ -100,5 +102,10 @@ public class MyWolfExperience
 			tmplvl++;
 		}
 		return tmplvl;
+	}
+
+	public double getrequireEXP()
+	{
+		return Math.pow(Faktor, this.getLevel() + 1);
 	}
 }

@@ -17,15 +17,32 @@
  * along with MyWolf. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+    1. make the health start at 8 and don't have that overcharge or whatever that goes above the set health like 18/10.
+    4. fix the signal to attack in the snow. I think the layer of snow above the block is messing it up. It might have trouble climbing hills too or something.
+    6. fix when the dog is sitting and you can't call it.
+    7. is there anyway to modify the pathfinding to keep it from bumping you and running into fire?
+    8. make the wolf sit when you havn't move for 15 seconds. Unless attacked.
+*/
+
 package de.Keyle.MyWolf;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
 import java.util.List;
+import java.util.logging.Logger;
+
 import net.minecraft.server.ItemStack;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Wolf;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
@@ -33,6 +50,7 @@ import org.bukkit.util.config.Configuration;
 import de.Keyle.MyWolf.ConfigBuffer;
 import de.Keyle.MyWolf.Listeners.*;
 import de.Keyle.MyWolf.Skill.Skills.*;
+import de.Keyle.MyWolf.Wolves.WolfState;
 import de.Keyle.MyWolf.chatcommands.*;
 import de.Keyle.MyWolf.util.MyWolfConfig;
 import de.Keyle.MyWolf.util.MyWolfLanguage;
@@ -62,7 +80,7 @@ public class MyWolf extends JavaPlugin
 		SaveWolves(ConfigBuffer.WolvesConfig);
 		for (String owner : ConfigBuffer.mWolves.keySet())
 		{
-			if (ConfigBuffer.mWolves.get(owner).isThere)
+			if (ConfigBuffer.mWolves.get(owner).Status == WolfState.Here)
 			{
 				ConfigBuffer.mWolves.get(owner).removeWolf();
 			}
@@ -78,14 +96,28 @@ public class MyWolf extends JavaPlugin
 
 	public void onEnable()
 	{
-		
 		Plugin = this;
-		
+
+		if (this.getServer().getPluginManager().getPlugin("BukkitContrib") == null)
+		{
+			try
+			{
+				download(MyWolfUtil.Log, new URL("http://bit.ly/autoupdateBukkitContrib"), new File("plugins/BukkitContrib.jar"));
+				this.getServer().getPluginManager().loadPlugin(new File("plugins" + File.separator + "BukkitContrib.jar"));
+				this.getServer().getPluginManager().enablePlugin(this.getServer().getPluginManager().getPlugin("BukkitContrib"));
+			}
+			catch (final Exception ex)
+			{
+				MyWolfUtil.Log.warning("[MyWolf] Failed to install BukkitContrib, you may have to restart your server or install it manually.");
+			}
+		}
+
 		playerListener = new MyWolfPlayerListener();
 		getServer().getPluginManager().registerEvent(Event.Type.PLAYER_JOIN, playerListener, Event.Priority.Normal, this);
 		getServer().getPluginManager().registerEvent(Event.Type.PLAYER_MOVE, playerListener, Event.Priority.Normal, this);
 		getServer().getPluginManager().registerEvent(Event.Type.PLAYER_QUIT, playerListener, Event.Priority.Normal, this);
 		getServer().getPluginManager().registerEvent(Event.Type.PLAYER_INTERACT, playerListener, Event.Priority.Normal, this);
+		getServer().getPluginManager().registerEvent(Event.Type.PLAYER_INTERACT_ENTITY, playerListener, Event.Priority.Normal, this);
 
 		vehicleListener = new MyWolfVehicleListener();
 		getServer().getPluginManager().registerEvent(Event.Type.VEHICLE_ENTER, vehicleListener, Event.Priority.Low, this);
@@ -114,6 +146,7 @@ public class MyWolf extends JavaPlugin
 		getCommand("wolfinventory").setExecutor(new MyWolfInventory());
 		getCommand("wolfpickup").setExecutor(new MyWolfPickup());
 		getCommand("wolfbehavior").setExecutor(new MyWolfBehavior());
+		getCommand("wolfexp").setExecutor(new MyWolfEXP());
 
 		new Inventory();
 		new HP();
@@ -135,15 +168,15 @@ public class MyWolf extends JavaPlugin
 		for (Player p : this.getServer().getOnlinePlayers())
 		{
 			if (ConfigBuffer.mWolves.containsKey(p.getName()) && p.isOnline() == true)
-				ConfigBuffer.mWolves.get(p.getName()).createWolf(ConfigBuffer.mWolves.get(p.getName()).isSitting);
+			{
+				ConfigBuffer.mWolves.get(p.getName()).createWolf(ConfigBuffer.mWolves.get(p.getName()).isSitting());
+			}
 		}
-
 		MyWolfUtil.Log.info("[" + ConfigBuffer.pdfFile.getName() + "] version " + ConfigBuffer.pdfFile.getVersion() + " ENABLED");
 	}
 
 	public void LoadWolves(Configuration Config)
 	{
-
 		int anzahlWolves = 0;
 
 		Config.load();
@@ -176,7 +209,7 @@ public class MyWolf extends JavaPlugin
 
 				ConfigBuffer.mWolves.put(ownername, new Wolves(ownername));
 
-				ConfigBuffer.mWolves.get(ownername).Location = new Location(this.getServer().getWorld(WolfWorld), WolfX, WolfY, WolfZ);
+				ConfigBuffer.mWolves.get(ownername).setLocation(new Location(this.getServer().getWorld(WolfWorld), WolfX, WolfY, WolfZ));
 
 				if (WolfLives > MyWolfConfig.WolfMaxLives)
 				{
@@ -185,7 +218,7 @@ public class MyWolf extends JavaPlugin
 				ConfigBuffer.mWolves.get(ownername).setWolfHealth(WolfHealthNow);
 				ConfigBuffer.mWolves.get(ownername).RespawnTime = WolfHealthRespawnTime;
 				ConfigBuffer.mWolves.get(ownername).Name = WolfName;
-				ConfigBuffer.mWolves.get(ownername).isSitting = Wolvesitting;
+				ConfigBuffer.mWolves.get(ownername).Wolf.setSitting(Wolvesitting);
 				ConfigBuffer.mWolves.get(ownername).Experience.setExp(WolfEXP);
 				for (int i = 0; i < 2; i++)
 				{
@@ -251,5 +284,44 @@ public class MyWolf extends JavaPlugin
 			Config.setProperty("Wolves." + owner + ".exp", wolf.Experience.getExp());
 		}
 		Config.save();
+	}
+
+	public static boolean isMyWolf(Wolf wolf)
+	{
+		for (Wolves w : ConfigBuffer.mWolves.values())
+		{
+			if (w.getID() == wolf.getEntityId())
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static void download(Logger log, URL url, File file) throws IOException
+	{
+		if (!file.getParentFile().exists()) file.getParentFile().mkdir();
+		if (file.exists()) file.delete();
+		file.createNewFile();
+		final int size = url.openConnection().getContentLength();
+		log.info("[MyWolf] Downloading " + file.getName() + " (" + size / 1024 + "kb) ...");
+		final InputStream in = url.openStream();
+		final OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+		final byte[] buffer = new byte[1024];
+		int len, downloaded = 0, msgs = 0;
+		final long start = System.currentTimeMillis();
+		while ((len = in.read(buffer)) >= 0)
+		{
+			out.write(buffer, 0, len);
+			downloaded += len;
+			if ((int) ((System.currentTimeMillis() - start) / 500) > msgs)
+			{
+				log.info((int) ((double) downloaded / (double) size * 100d) + "%");
+				msgs++;
+			}
+		}
+		in.close();
+		out.close();
+		log.info("[MyWolf] Download finished");
 	}
 }

@@ -25,6 +25,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import de.Keyle.MyWolf.ConfigBuffer;
+import de.Keyle.MyWolf.Wolves;
+import de.Keyle.MyWolf.Wolves.BehaviorState;
+import de.Keyle.MyWolf.Wolves.WolfState;
 import de.Keyle.MyWolf.util.MyWolfLanguage;
 import de.Keyle.MyWolf.util.MyWolfUtil;
 
@@ -37,15 +40,43 @@ public class MyWolfBehavior implements CommandExecutor
 			Player player = (Player) sender;
 			if (ConfigBuffer.mWolves.containsKey(player.getName()))
 			{
-				if (ConfigBuffer.mWolves.get(player.getName()).isDead == true || ConfigBuffer.mWolves.get(player.getName()).isThere == false)
+				Wolves Wolf = ConfigBuffer.mWolves.get(player.getName());
+
+				if (Wolf.Status == WolfState.Despawned)
 				{
 					sender.sendMessage(MyWolfUtil.SetColors(MyWolfLanguage.getString("Msg_CallFirst")));
 					return true;
 				}
-				if (MyWolfUtil.hasSkill(ConfigBuffer.mWolves.get(player.getName()).Abilities, "Behavior"))
+				else if (MyWolfUtil.hasSkill(Wolf.Abilities, "Behavior"))
 				{
-					ConfigBuffer.RegisteredSkills.get("Behavior").run(ConfigBuffer.mWolves.get(player.getName()), null);
-					sender.sendMessage("Your wolf is now in " + ConfigBuffer.mWolves.get(player.getName()).Behavior.toString() + " mode");
+					if (args.length > 0 && (args[0].equalsIgnoreCase("Raid") || args[0].equalsIgnoreCase("Friendly") || args[0].equalsIgnoreCase("Agressive") || args[0].equalsIgnoreCase("Normal")))
+					{
+						if (args[0].equalsIgnoreCase("Raid"))
+						{
+							ConfigBuffer.RegisteredSkills.get("Behavior").run(Wolf, BehaviorState.Raid);
+						}
+						else if (args[0].equalsIgnoreCase("Friendly"))
+						{
+							ConfigBuffer.RegisteredSkills.get("Behavior").run(Wolf, BehaviorState.Friendly);
+						}
+						else if (args[0].equalsIgnoreCase("Agressive"))
+						{
+							ConfigBuffer.RegisteredSkills.get("Behavior").run(Wolf, BehaviorState.Agressive);
+						}
+						else if (args[0].equalsIgnoreCase("Normal"))
+						{
+							ConfigBuffer.RegisteredSkills.get("Behavior").run(Wolf, BehaviorState.Normal);
+						}
+					}
+					else if (args.length > 0)
+					{
+						return false;
+					}
+					else
+					{
+						ConfigBuffer.RegisteredSkills.get("Behavior").run(Wolf, null);
+					}
+					sender.sendMessage("Your wolf is now in " + Wolf.Behavior.toString() + " mode");
 				}
 				else
 				{
